@@ -107,22 +107,19 @@ def test_unsegment_unmatched_input():
 
 
 def test_non_negative_matrix():
-    factor = lnmf.LNMF(n_components=10)
     TEST_W = np.abs(np.random.rand(20, 10))
     TEST_H = np.abs(np.random.rand(10, 40))
     TEST_V = TEST_W.dot(TEST_H)
     TEST_V_NORM = np.linalg.norm(TEST_V)
     TEST_Y = np.random.randint(0, 10, 20)
-    calc_w = factor.fit_transform(TEST_V, TEST_Y)
-    calc_h = factor.components_
+    calc_w, calc_h = lnmf.factorize(TEST_V, TEST_Y, n_components=10, return_w=True)
     test_dist = np.linalg.norm(TEST_V - calc_w.dot(calc_h))
     assert test_dist / TEST_V_NORM < 5e-2
 
 
 def test_negative_matrix():
-    factor = lnmf.LNMF(n_components=10)
     TEST_V = np.abs(np.random.rand(15, 45))
     TEST_V[3, 5] = -1
     TEST_Y = np.random.randint(0, 10, 20)
     with pytest.raises(RuntimeError):
-        factor.fit_transform(TEST_V, TEST_Y)
+        lnmf.factorize(TEST_V, TEST_Y, n_components=10)

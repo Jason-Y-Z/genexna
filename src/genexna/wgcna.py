@@ -1,68 +1,47 @@
+"""
+TODO
+"""
+
 from sklearn.cluster import AgglomerativeClustering
 import numpy as np
 
 
-def calc_tom(A):
+def calc_tom(mat):
     """
     Calculate the Topological Overlap Measure for matrix A.
     :param A: target matrix
     """
-    d = A.shape[0]  # dimension
-    A[np.arange(d), np.arange(d)] = 0
-    L = A @ A
-    K = A.sum(axis=1)
+    dim = mat.shape[0]  # dimension
+    mat[np.arange(dim), np.arange(dim)] = 0
+    l = mat @ mat
+    k = mat.sum(axis=1)
 
     # Initialize results.
-    A_tom = np.zeros_like(A)
+    mat_tom = np.zeros_like(mat)
 
     # Calculate TOM according to definition.
-    for i in range(d):
-        for j in range(i + 1, d):
-            numerator = L[i, j] + A[i, j]
-            denominator = min(K[i], K[j]) + 1 - A[i, j]
-            A_tom[i, j] = numerator / denominator
-    A_tom += A_tom.T
+    for i in range(dim):
+        for j in range(i + 1, dim):
+            numerator = l[i, j] + mat[i, j]
+            denominator = min(k[i], k[j]) + 1 - mat[i, j]
+            mat_tom[i, j] = numerator / denominator
+    mat_tom += mat_tom.T
 
     # Set diagonal to 1 by default.
-    A_tom[np.arange(d), np.arange(d)] = 1
-    return A_tom
+    mat_tom[np.arange(dim), np.arange(dim)] = 1
+    return mat_tom
 
 
-class WGCNA:
-    def __init__(self, n_networks, alpha=0.5, beta=6):
-        self.n_networks = n_networks
-        self.alpha = alpha
-        self.beta = beta
+def label_networks(mat, n_networks, alpha=0.5, beta=6):
+    """
+    Apply weighted gene coexpression network analysis on X.
+    """
+    sim = alpha + (1 - alpha) * np.corrcoef(mat)  # similarity measure
+    adj = np.power(sim, beta)  # adjacency matrix
+    tom = calc_tom(adj)  # topological overlap measure
 
-    def _calc_sim_measure(self, X):
-        """
-        Calculate the similarity measure between columns of X.
-        :param X: target matrix
-        """
-        # Initialise similarity measure.
-        corr = np.corrcoef(X)
-
-        # Calculate the similarity measure.
-        S = self.alpha + (1 - self.alpha) * corr
-        return S
-
-    def _calc_adj_matrix(self, S):
-        """
-        Calculate Adjacency Matrix.
-        """
-        return np.power(S, self.beta)
-
-    def fit_transform(self, X):
-        """
-        Apply weighted gene coexpression network analysis on X.
-        """
-        S = self._calc_sim_measure(X)  # similarity measure
-        A = self._calc_adj_matrix(S)  # adjacency matrix
-        tom = calc_tom(A)  # topological overlap measure
-
-        # Apply Average Linkage Agglomerative Clustering with TOM.
-        clusterer = AgglomerativeClustering(n_clusters=self.n_networks,
-                                            affinity='precomputed',
-                                            linkage='average')
-        cluster_labels = clusterer.fit_predict(tom)
-        return np.eye(self.n_networks)[cluster_labels]
+    # Apply Average Linkage Agglomerative Clustering with TOM.
+    clusterer = AgglomerativeClustering(n_clusters=n_networks,
+                                        affinity='precomputed',
+                                        linkage='average')
+    return clusterer.fit_predict(tom)
