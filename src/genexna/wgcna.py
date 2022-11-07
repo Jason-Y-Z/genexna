@@ -52,7 +52,7 @@ class WGCNA:
         """
         return np.power(S, self.beta)
 
-    def fit_predict(self, X):
+    def fit_transform(self, X):
         """
         Apply weighted gene coexpression network analysis on X.
         """
@@ -64,4 +64,5 @@ class WGCNA:
         clusterer = AgglomerativeClustering(n_clusters=self.n_networks,
                                             affinity='precomputed',
                                             linkage='average')
-        return clusterer.fit_predict(tom)
+        cluster_labels = clusterer.fit_predict(tom)
+        return np.eye(self.n_networks)[cluster_labels]

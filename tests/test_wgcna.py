@@ -14,8 +14,8 @@ def test_wgcna_on_a_random_matrix():
     wgcna = WGCNA(n_networks=n_networks)
 
     # Perform clustering.
-    y = wgcna.fit_predict(X)
+    y = wgcna.fit_transform(X)
 
     # Check test results.
-    for y_i in y:
-        assert y_i < n_networks
+    for n_i in range(n):
+        assert np.argmax(y[n_i]) < n_networks
