@@ -1,6 +1,6 @@
-from genexna.wgcna import label_networks
-import numpy as np
 import random
+import numpy as np
+from genexna.wgcna import label_networks
 
 
 def test_wgcna_on_a_random_matrix():

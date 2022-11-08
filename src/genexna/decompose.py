@@ -1,6 +1,7 @@
 """
-TODO: Docstring
+Decompose a gene expression profile to obtain network composition
 """
+
 import abc
 from dataclasses import dataclass
 from typing import Optional, Sequence
@@ -16,19 +17,21 @@ from .wgcna import label_networks
 
 class DecomposeAlgorithm(abc.ABC):
     """
-    TODO
+    Interface for an algorithm used to decompose the gene expression profile.
     """
     @abc.abstractmethod
-    def __call__(self, mat: np.array, _: Optional[Sequence[int]]) -> np.array:
+    def __call__(self, mat: np.array, labels: Optional[Sequence[int]]) -> np.array:
         """
-        An algorithm class must be callable.
+        The algorithm should decompose the gene expression `mat`, optionally using
+        the class labels of the subjects `labels`, to produce the gene network
+        composition as a probablity distribution.
         """
 
 
 @dataclass
 class WGCNA(DecomposeAlgorithm):
     """
-    TODO
+    Weighted gene coexpression network analysis based decomposer.
     """
     n_networks: int
     alpha: float = 0.5
@@ -43,7 +46,7 @@ class WGCNA(DecomposeAlgorithm):
 @dataclass
 class LNMF(DecomposeAlgorithm):
     """
-    TODO
+    Labelled nonnegative matrix factorization based decomposer.
     """
     w_init: np.array = None
     h_init: np.array = None
@@ -53,15 +56,15 @@ class LNMF(DecomposeAlgorithm):
     gamma: float = 0.1
     max_iters: int = 1000
 
-    def __call__(self, mat: np.array, y: Optional[Sequence[int]]) -> np.array:
-        h = factorize(mat, y, self.w_init, self.h_init, self.n_components, self.alpha,
+    def __call__(self, mat: np.array, labels: Optional[Sequence[int]]) -> np.array:
+        h = factorize(mat, labels, self.w_init, self.h_init, self.n_components, self.alpha,
                       self.beta, self.gamma, self.max_iters, return_w=False)
         return normalize(np.nan_to_num(h), norm='l1', axis=0)
 
 
 class NMF(DecomposeAlgorithm):
     """
-    TODO
+    Nonnegative matrix factorization based decomposer.
     """
 
     def __init__(self, *args, **kwargs):

@@ -1,5 +1,5 @@
 """
-TODO
+Labeled Non-negative Matrix Factorization
 """
 
 import collections
