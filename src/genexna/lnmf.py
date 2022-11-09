@@ -170,7 +170,7 @@ def factorize(mat, labels, w_init=None, h_init=None,
               return_w=False):
     """
     Labeled Non-negative Matrix Factorization with regularization.
-    :param mat: target matrix
+    :param mat: target matrix of shape [n_subject, n_features]
     :param labels: class labels
     :param w_init: initial guess for W
     :param h_init: initial guess for H
@@ -189,7 +189,7 @@ def factorize(mat, labels, w_init=None, h_init=None,
     num_classes = len(set(labels))
 
     # Define the latent dimension.
-    r = n_components if n_components > 0 else min(n, m)
+    r = n_components if n_components else min(n, m)
 
     # Randomly initialise the factor matrices if initial values not given.
     w = w_init if w_init is not None else np.abs(np.random.normal(size=(n, r)))

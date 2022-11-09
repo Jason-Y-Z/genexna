@@ -39,8 +39,8 @@ class WGCNA(DecomposeAlgorithm):
 
     def __call__(self, mat: np.array, _: Optional[Sequence[int]]) -> np.array:
         cluster_labels = label_networks(
-            mat, self.n_networks, self.alpha, self.beta)
-        return np.eye(self.n_networks)[cluster_labels]
+            mat.T, self.n_networks, self.alpha, self.beta)
+        return np.eye(self.n_networks)[cluster_labels].T
 
 
 @dataclass
@@ -85,6 +85,10 @@ def decompose(
     Decompose the gene expression matrix to
     obtain the composition of each gene in terms of
     the gene networks.
+    :param gene_expr: gene expression profile of shape [n_subject, n_genes]
     """
-    prob_vals = algo(gene_expr.to_numpy(), traits)
+    prob_vals = algo(
+        gene_expr.to_numpy(),
+        traits if traits else np.zeros(gene_expr.shape[0])
+    )
     return pd.DataFrame(data=prob_vals, index=range(prob_vals.shape[0]), columns=gene_expr.columns)
