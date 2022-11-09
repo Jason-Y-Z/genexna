@@ -35,9 +35,9 @@ def calc_tom(mat):
 def label_networks(mat, n_networks, alpha=0.5, beta=6):
     """
     Apply weighted gene coexpression network analysis on X.
-    :param mat: target matrix of shape [n_genes, n_subjects]
+    :param mat: target matrix of shape [n_subjects, n_genes]
     """
-    sim = alpha + (1 - alpha) * np.corrcoef(mat)  # similarity measure
+    sim = alpha + (1 - alpha) * np.corrcoef(mat.T)  # similarity measure
     adj = np.power(sim, beta)  # adjacency matrix
     tom = calc_tom(adj)  # topological overlap measure
 
