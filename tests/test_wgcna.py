@@ -1,6 +1,6 @@
-from genexna.wgcna import WGCNA
-import numpy as np
 import random
+import numpy as np
+from genexna.wgcna import label_networks
 
 
 def test_wgcna_on_a_random_matrix():
@@ -10,12 +10,9 @@ def test_wgcna_on_a_random_matrix():
     n_networks = random.randint(1, 5)
     X = np.abs(np.random.rand(n, m))
 
-    # Initialise the algorithm.
-    wgcna = WGCNA(n_networks=n_networks)
-
     # Perform clustering.
-    y = wgcna.fit_transform(X)
+    y = label_networks(X, n_networks=n_networks)
 
     # Check test results.
-    for n_i in range(n):
-        assert np.argmax(y[n_i]) < n_networks
+    for y_i in y:
+        assert y_i < n_networks
