@@ -2,10 +2,10 @@ import random
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import normalize
-from genexna.evaluate import calc_soft_pcc
+from genexna.evaluate import calc_eigengene_pccs
 
 
-def test_calc_soft_pcc():
+def test_calc_eigengene_pccs():
     # given
     n_subjects = random.randint(10, 20)
     n_traits = random.randint(10, 20)
@@ -18,7 +18,7 @@ def test_calc_soft_pcc():
     ))
 
     # when
-    soft_pcc = calc_soft_pcc(gene_expr, traits, gene_network_prob)
+    soft_pcc = calc_eigengene_pccs(gene_expr, traits, gene_network_prob)
 
     # then
     for network in range(n_networks):

@@ -1,52 +1,66 @@
 from typing import Dict, Tuple
-import numpy as np
 import pandas as pd
+import numpy as np
 import scipy.stats
 
 
 def _pearson_corr_coeff(
-    mat: pd.DataFrame, labels: pd.DataFrame
+    mat: pd.DataFrame, traits: pd.DataFrame
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    pcc_df = pd.DataFrame(index=mat.columns, columns=labels.columns)
-    p_value_df = pd.DataFrame(index=mat.columns, columns=labels.columns)
-    for label in labels:
-        for feature in mat.columns:
-            pearson_r = scipy.stats.pearsonr(mat.loc[:, feature], labels[label])
-            pcc_df.loc[feature, label] = pearson_r[0]
-            p_value_df.loc[feature, label] = pearson_r[1]
-    return pcc_df, p_value_df
+    pcc = pd.DataFrame(0, index=mat.index, columns=traits.columns)
+    p_value = pd.DataFrame(0, index=mat.index, columns=traits.columns)
+    for col in traits:
+        for index, eigengene in mat.iterrows():
+            pearson_r = scipy.stats.pearsonr(eigengene, traits[col])
+            pcc.loc[index, col] = pearson_r[0]
+            p_value.loc[index, col] = pearson_r[1]
+    return pcc, p_value
 
 
-def calc_soft_pcc(
+def _soft_network_eigengenes(
+    gene_expr: pd.DataFrame, gene_network_prob: pd.DataFrame
+) -> pd.DataFrame:
+    """
+    Find the eigengenes for each network with soft boundaries,
+    which means each gene is not assigned to a single cluster
+    but to multiple clusters with probability distribution given.
+
+    Args:
+        gene_expr: gene expression levels, [n_subjects, n_genes]
+        gene_network_prob: probability of gene A in network B, [n_networks, n_genes]
+
+    Returns:
+        pd.DataFrame: soft eigengenes, [n_networks, n_subjects]
+    """
+    eigengenes = {
+        network: np.zeros(gene_expr.shape[0])
+        for network in gene_network_prob.index
+    }
+    for gene in gene_network_prob:
+        for network, prob in gene_network_prob[gene].items():
+            eigengenes[network] += gene_expr.loc[:, gene] * prob
+    return pd.DataFrame.from_dict(eigengenes, orient="index")
+
+
+def calc_eigengene_pccs(
     gene_expr, traits, gene_network_prob, aggregate=np.max
 ) -> Dict[int, float]:
     """
-    Calculate the Pearson Correlation Coefficients for all the networks.
+    Calculate the aggregated Pearson Correlation Coefficients
+    for all the soft network eigengenes.
 
     Args:
+        gene_expr: gene expression levels, [n_subjects, n_genes]
+        traits: the traits or labels we are correlating with
         gene_network_prob: probability of gene A in network B, [n_networks, n_genes]
-        aggregate: method to aggregate the PCCs over traits
+        aggregate: method to aggregate the PCC's over traits
 
     Returns:
-        Dict[int, float]: aggregated PCC for each network
+        Dict[int, float]: aggregated PCC for each gene network
     """
-    pcc_df, _ = _pearson_corr_coeff(gene_expr, traits)  # [n_genes, n_traits]
-    avg_val = np.zeros((gene_network_prob.shape[0], pcc_df.shape[1]))
-
-    # calculate the average value for each network
-    total_network_probs = gene_network_prob.sum(axis=1)
-    for gene in gene_network_prob:
-        for network, prob in gene_network_prob[gene].items():
-            avg_val[network, :] = np.add(
-                avg_val[network, :],
-                np.nan_to_num(
-                    pcc_df.loc[gene, :].to_numpy() * prob / total_network_probs[network]
-                )
-            )
-
-    # average metric value for all the soft networks
-    avg_pcc = pd.DataFrame(
-        data=avg_val,
-        index=range(gene_network_prob.shape[0])
-    ) # [n_networks, n_traits]
-    return {i: aggregate(np.abs(avg_pcc.loc[i, :])) for i in avg_pcc.index}
+    eigengenes = _soft_network_eigengenes(gene_expr, gene_network_prob)
+    eigen_corr, _ = _pearson_corr_coeff(eigengenes, traits)
+    return {
+        i: aggregate(np.abs(eigen_corr.loc[i, :]))
+        for i in eigen_corr.index
+    }
