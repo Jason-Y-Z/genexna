@@ -170,7 +170,7 @@ def factorize(mat, labels, w_init=None, h_init=None,
               return_w=False):
     """
     Labeled Non-negative Matrix Factorization with regularization.
-    :param mat: target matrix of shape [n_subject, n_features]
+    :param mat: target matrix of shape [n_subjects, n_features]
     :param labels: class labels
     :param w_init: initial guess for W
     :param h_init: initial guess for H

@@ -39,7 +39,7 @@ class WGCNA(DecomposeAlgorithm):
 
     def __call__(self, mat: np.array, _: Optional[Sequence[int]]) -> np.array:
         cluster_labels = label_networks(
-            mat.T, self.n_networks, self.alpha, self.beta)
+            mat, self.n_networks, self.alpha, self.beta)
         return np.eye(self.n_networks)[cluster_labels].T
 
 
@@ -66,7 +66,6 @@ class NMF(DecomposeAlgorithm):
     """
     Nonnegative matrix factorization based decomposer.
     """
-
     def __init__(self, *args, **kwargs):
         self._nmf = decomposition.NMF(*args, **kwargs)
 
@@ -78,17 +77,22 @@ class NMF(DecomposeAlgorithm):
 
 def decompose(
     gene_expr: pd.DataFrame,
-    traits: Optional[Sequence[int]] = None,
+    labels: Optional[Sequence[int]] = None,
     algo: DecomposeAlgorithm = NMF(),
-):
+) -> pd.DataFrame:
     """
     Decompose the gene expression matrix to
     obtain the composition of each gene in terms of
     the gene networks.
-    :param gene_expr: gene expression profile of shape [n_subject, n_genes]
+
+    Args:
+        gene_expr: gene expression profile of shape [n_subjects, n_genes]
+
+    Returns:
+        pd.DataFrame: probability of a gene belonging to a network [n_networks, n_genes]
     """
     prob_vals = algo(
         gene_expr.to_numpy(),
-        traits if traits else np.zeros(gene_expr.shape[0])
+        labels if labels else np.zeros(gene_expr.shape[0])
     )
     return pd.DataFrame(data=prob_vals, index=range(prob_vals.shape[0]), columns=gene_expr.columns)
