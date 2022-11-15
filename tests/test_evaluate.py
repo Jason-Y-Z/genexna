@@ -1,11 +1,13 @@
 import random
 import numpy as np
 import pandas as pd
+import pytest
 from sklearn.preprocessing import normalize
 from genexna.evaluate import calc_eigengene_pccs
 
 
-def test_calc_eigengene_pccs():
+@pytest.mark.parametrize("soft", [False, True])
+def test_calc_eigengene_pccs(soft):
     # given
     n_subjects = random.randint(10, 20)
     n_traits = random.randint(10, 20)
@@ -14,12 +16,12 @@ def test_calc_eigengene_pccs():
     gene_expr = pd.DataFrame(np.abs(np.random.rand(n_subjects, n_genes)))
     traits = pd.DataFrame(np.abs(np.random.rand(n_subjects, n_traits)))
     gene_network_prob = pd.DataFrame(normalize(
-        np.nan_to_num(np.abs(np.random.rand(n_networks, n_genes))), norm='l1', axis=0
-    ))
+        np.abs(np.random.rand(n_networks, n_genes)), norm='l1', axis=0
+    )) if soft else random.choices(range(n_networks), k=n_genes)
 
     # when
-    soft_pcc = calc_eigengene_pccs(gene_expr, traits, gene_network_prob)
+    pcc = calc_eigengene_pccs(gene_expr, traits, gene_network_prob, soft=soft)
 
     # then
     for network in range(n_networks):
-        assert soft_pcc[network] <= 1
+        assert pcc[network] <= 1
