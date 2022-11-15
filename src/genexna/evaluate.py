@@ -43,7 +43,7 @@ def _soft_net_eigengenes(
     return pd.DataFrame.from_dict(eigengenes, orient="index")
 
 
-def _segregate_2d(mat, network_labels):
+def segregate_2d(mat, network_labels):
     networks = {i: [] for i in set(network_labels)}
 
     # Put the vectors into corresponding networks.
@@ -71,7 +71,7 @@ def _hard_net_eigengenes(
     """
     
     # Separate the genes into networks.
-    x_network = _segregate_2d(gene_expr.to_numpy().T, network_labels)
+    x_network = segregate_2d(gene_expr.to_numpy().T, network_labels)
     eigengenes = {}
 
     # Apply PCA to find first principal component.
